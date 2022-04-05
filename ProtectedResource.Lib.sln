@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtectedResource.UnitTests
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtectedResource.IntegrationTests", "ProtectedResource.IntegrationTests\ProtectedResource.IntegrationTests.csproj", "{CA06286F-4E29-4500-81B5-3FFE48837BF7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtectedResource.Service", "ProtectedResource.Service\ProtectedResource.Service.csproj", "{3E4EA8FB-722F-42B7-B402-96234BE6466E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{CA06286F-4E29-4500-81B5-3FFE48837BF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CA06286F-4E29-4500-81B5-3FFE48837BF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CA06286F-4E29-4500-81B5-3FFE48837BF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E4EA8FB-722F-42B7-B402-96234BE6466E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E4EA8FB-722F-42B7-B402-96234BE6466E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E4EA8FB-722F-42B7-B402-96234BE6466E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E4EA8FB-722F-42B7-B402-96234BE6466E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
