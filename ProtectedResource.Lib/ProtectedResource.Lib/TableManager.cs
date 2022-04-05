@@ -26,11 +26,13 @@ namespace ProtectedResource.Lib
 		private SchemaQuery _schema;
 		private string _selectByPartitionKey;
 		private string _updateByPartitionKeyTemplate;
+		private readonly IConfigurationService _config;
 
 		public TableManager(
 			IQueryToClassRepository repository,
 			ICachingService cachingService,
-			IMessagingQueueService messagingQueueService)
+			IMessagingQueueService messagingQueueService,
+			IConfigurationService config)
 		{
 			_repository = repository;
 
@@ -39,6 +41,8 @@ namespace ProtectedResource.Lib
 			_messagingQueueService = messagingQueueService;
 
 			_partitionWatchers = new Dictionary<string, PartitionWatcher<T>>();
+
+			_config = config;
 		}
 
 		public void Initialize(TableQuery tableQuery, int chunkSize)
@@ -107,7 +111,6 @@ namespace ProtectedResource.Lib
 				repJObject = SquashChanges(repJObject, otherJObject);
 			}
 
-			//TODO: Make representative object contain targeted properties only after merge with cached object.
 			//Cached will have all properties always, representative will not. Make them match.
 			//This impacts the SQL creation as well
 			//https://www.newtonsoft.com/json/help/html/jobjectproperties.htm
@@ -212,7 +215,7 @@ namespace ProtectedResource.Lib
 			//Partition the items into separate queues
 			if (!_partitionWatchers.TryGetValue(key, out var watcher))
 			{
-				watcher = new PartitionWatcher<T>(key);
+				watcher = new PartitionWatcher<T>(_config, key);
 				watcher.WhenStale += PartitionWatcher_WhenStale;
 
 				_partitionWatchers.Add(key, watcher);

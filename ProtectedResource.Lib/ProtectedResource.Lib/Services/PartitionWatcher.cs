@@ -18,20 +18,20 @@ namespace ProtectedResource.Lib.Services
 
         private readonly Timer _timer;
 
-        public PartitionWatcher(string partitionKey)
-            : this(partitionKey, new Queue<ChangeRequest<T>>())
+        public PartitionWatcher(IConfigurationService config, string partitionKey)
+            : this(config, partitionKey, new Queue<ChangeRequest<T>>())
         {
-
+            
         }
 
-        public PartitionWatcher(string partitionKey, Queue<ChangeRequest<T>> queue)
+        public PartitionWatcher(IConfigurationService config, string partitionKey, Queue<ChangeRequest<T>> queue)
         {
             PartitionKey = partitionKey;
 
             Queue = queue;
 
             _timer = new Timer();
-            _timer.Interval = 10000; //TODO: Make timer interval configurable
+            _timer.Interval = config.PartitionWatcherMilliseconds;
             _timer.AutoReset = false;
             _timer.Elapsed += DequeueTimer_Elapsed;
         }
