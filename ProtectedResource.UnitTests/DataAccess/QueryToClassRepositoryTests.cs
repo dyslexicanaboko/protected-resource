@@ -7,6 +7,7 @@ using ProtectedResource.Lib.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using ProtectedResource.Lib.Services;
 
 namespace ProtectedResource.UnitTests.DataAccess
 {
@@ -49,7 +50,7 @@ namespace ProtectedResource.UnitTests.DataAccess
             expected.Parameters.Add("PrimaryKey", 4, DbType.Int32);
 
             //Act
-            var reference = new QueryToClassRepository();
+            var reference = new QueryToClassRepository(new ConfigurationService());
 
             var actual = InvokePrivateMethod<QueryToClassRepository, SqlParamList>(
                 reference, 

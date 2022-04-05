@@ -12,5 +12,7 @@ namespace ProtectedResource.UnitTests.Dummy
         public string MessageQueueUri => null;
 
         public int PartitionWatcherMilliseconds => 10000;
+
+        public string ConnectionString => null;
     }
 }

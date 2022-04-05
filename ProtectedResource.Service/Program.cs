@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using ProtectedResource.Lib.DataAccess;
+using ProtectedResource.Lib.Services;
 
 namespace ProtectedResource.Service
 {
@@ -20,6 +22,11 @@ namespace ProtectedResource.Service
                 .UseWindowsService()
                 .ConfigureServices((hostContext, services) =>
                 {
+                    services.AddSingleton<IConfigurationService, ConfigurationService>();
+                    services.AddSingleton<ICachingService, CachingService>();
+                    services.AddScoped<IMessagingQueueService, MessagingQueueService>();
+                    services.AddScoped<IQueryToClassRepository, QueryToClassRepository>();
+
                     services.AddHostedService<Worker>();
                 });
     }

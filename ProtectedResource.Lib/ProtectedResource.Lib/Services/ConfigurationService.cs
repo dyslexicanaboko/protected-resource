@@ -32,5 +32,8 @@ namespace ProtectedResource.Lib.Services
         public string MessageQueueUri => _config[nameof(MessageQueueUri)];
 
         public int PartitionWatcherMilliseconds => Convert.ToInt32(_config[nameof(PartitionWatcherMilliseconds)]);
+
+        //Leaving this as is for now. Need to give it a more generic name later.
+        public string ConnectionString => _config.GetConnectionString("ScratchSpace");
     }
 }

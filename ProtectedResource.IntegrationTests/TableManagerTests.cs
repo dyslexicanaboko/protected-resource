@@ -16,9 +16,9 @@ namespace ProtectedResource.IntegrationTests
 
         public TableManagerTests()
         {
-            _repo = new QueryToClassRepository();
-
             _config = new ConfigurationService();
+
+            _repo = new QueryToClassRepository(_config);
 
             //Should live as part of a singleton instance
             _cachingService = new CachingService(_config);
