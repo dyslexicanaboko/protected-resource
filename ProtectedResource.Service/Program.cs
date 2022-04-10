@@ -2,19 +2,42 @@
 using Microsoft.Extensions.Hosting;
 using ProtectedResource.Lib.DataAccess;
 using ProtectedResource.Lib.Services;
+using Serilog;
+using System;
 
 namespace ProtectedResource.Service
 {
     //https://github.com/dotnet/AspNetCore.Docs/tree/main/aspnetcore/host-and-deploy/windows-service/samples/3.x/BackgroundWorkerServiceSample
     public class Program
     {
-        static void Main(string[] args)
+        //https://github.com/serilog/serilog-extensions-hosting/blob/dev/samples/SimpleServiceSample/Program.cs
+        public static int Main(string[] args)
         {
-            var hostBuilder = CreateHostBuilder(args);
+            Log.Logger = new LoggerConfiguration()
+                .Enrich.FromLogContext()
+                .WriteTo.Console()
+                .CreateBootstrapLogger();
 
-            var host = hostBuilder.Build();
+            try
+            {
+                var hostBuilder = CreateHostBuilder(args);
 
-            host.Run();
+                var host = hostBuilder.Build();
+
+                host.Run();
+
+                return 0;
+            }
+            catch(Exception ex)
+            {
+                Log.Fatal(ex, "Host terminated unexpectedly");
+
+                return 1;
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -27,7 +50,14 @@ namespace ProtectedResource.Service
                     services.AddScoped<IMessagingQueueService, MessagingQueueService>();
                     services.AddScoped<IQueryToClassRepository, QueryToClassRepository>();
 
-                    services.AddHostedService<Worker>();
+                    services.AddHostedService<WorkerService>();
+                }).UseSerilog((hostContext, loggerConfiguration) =>
+                {
+                    //Since this is configured here, don't do it in the JSON also otherwise the logging will appear twice
+                    loggerConfiguration
+                        .ReadFrom.Configuration(hostContext.Configuration)
+                        .WriteTo.Seq("http://localhost:5341")
+                        .WriteTo.Console();
                 });
     }
 }
