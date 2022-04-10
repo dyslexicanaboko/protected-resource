@@ -1,6 +1,6 @@
-﻿using System;
-using ProtectedResource.Lib.Models;
+﻿using ProtectedResource.Lib.Models;
 using StackExchange.Redis;
+using System;
 
 namespace ProtectedResource.Lib.Services
 {
@@ -9,22 +9,29 @@ namespace ProtectedResource.Lib.Services
     {
         private ConnectionMultiplexer _cache;
         private IDatabase _cacheDatabase;
+        private readonly IConfigurationService _config;
+        private readonly int _expirationSeconds;
 
-        public CachingService()
+        public CachingService(IConfigurationService config)
         {
-            //TODO: Inject configuration
+            _config = config;
+            
+            _expirationSeconds = _config.CacheExpirationSeconds;
         }
 
         public void Initialize()
         {
-            //TODO: Make endpoint configurable
+            //Only initialize a single time
+            if (_cache != null) return;
+
             _cache = ConnectionMultiplexer.Connect(
                 new ConfigurationOptions
                 {
-                    EndPoints = { "localhost:6379" }
+                    EndPoints = { _config.CachingUri }
                 });
 
             _cacheDatabase = _cache.GetDatabase();
+
         }
 
         /* Example input
@@ -50,15 +57,20 @@ namespace ProtectedResource.Lib.Services
                 new HashEntry(hashField, value)
             });
 
-            //TODO: Make expiration configurable
-            var expiresOn = DateTime.UtcNow.AddHours(1);
+            var expiresOn = DateTime.UtcNow.AddSeconds(_expirationSeconds);
 
             _cacheDatabase.KeyExpire(key, expiresOn);
         }
 
+        /// <summary>This should only be used for testing.</summary>
         public void Clear()
         {
             _cacheDatabase.Execute("flushdb");
+        }
+
+        public void Dispose()
+        {
+            _cache?.Dispose();
         }
     }
 }

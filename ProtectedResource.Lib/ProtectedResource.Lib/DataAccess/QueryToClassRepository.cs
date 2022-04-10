@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Newtonsoft.Json.Linq;
 using ProtectedResource.Lib.Models;
+using ProtectedResource.Lib.Services;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -15,6 +16,12 @@ namespace ProtectedResource.Lib.DataAccess
     public class QueryToClassRepository
         : BaseRepository, IQueryToClassRepository
     {
+        public QueryToClassRepository(IConfigurationService config)
+            : base(config)
+        {
+
+        }
+
         public SchemaQuery GetSchema(TableQuery tableQuery, string query)
         {
             var rs = GetFullSchemaInformation(query);

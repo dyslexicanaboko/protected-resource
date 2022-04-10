@@ -2,6 +2,7 @@
 using Moq;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using ProtectedResource.Entity;
 using ProtectedResource.IntegrationTests;
 using ProtectedResource.Lib;
 using ProtectedResource.Lib.DataAccess;
@@ -59,14 +60,16 @@ namespace ProtectedResource.UnitTests
 
         private TableManager<RudimentaryEntity> GetTableManager()
         {
+            var config = new DummyConfigurationService();
+
             //This cannot be a singleton I don't think, but should only be instantiated once per resource
             //Not sure how I am going to deal with this yet
-            var queue = new MessagingQueueService();
+            var queue = new MessagingQueueService(config);
             
             _dummyCache = new DummyCachingService();
             _dummyCache.Initialize();
 
-            var tm = new TableManager<RudimentaryEntity>(_mockRepo.Object, _dummyCache, queue);
+            var tm = new TableManager<RudimentaryEntity>(_mockRepo.Object, _dummyCache, queue, config);
 
             return tm;
         }

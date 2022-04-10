@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using ProtectedResource.Entity;
 using ProtectedResource.Lib;
 using ProtectedResource.Lib.DataAccess;
 using ProtectedResource.Lib.Models;
@@ -12,13 +13,16 @@ namespace ProtectedResource.IntegrationTests
     {
         private readonly IQueryToClassRepository _repo;
         private readonly ICachingService _cachingService;
+        private readonly IConfigurationService _config;
 
         public TableManagerTests()
         {
-            _repo = new QueryToClassRepository();
-            
+            _config = new ConfigurationService();
+
+            _repo = new QueryToClassRepository(_config);
+
             //Should live as part of a singleton instance
-            _cachingService = new CachingService();
+            _cachingService = new CachingService(_config);
             _cachingService.Initialize(); //Only call once
         }
 
@@ -32,9 +36,9 @@ namespace ProtectedResource.IntegrationTests
         {
             //This cannot be a singleton I don't think, but should only be instantiated once per resource
             //Not sure how I am going to deal with this yet
-            var queue = new MessagingQueueService();
+            var queue = new MessagingQueueService(_config);
 
-            var tm = new TableManager<RudimentaryEntity>(_repo, _cachingService, queue);
+            var tm = new TableManager<RudimentaryEntity>(_repo, _cachingService, queue, _config);
 
             return tm;
         }

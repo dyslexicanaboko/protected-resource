@@ -1,8 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
-using ProtectedResource.Lib.Models;
+﻿using ProtectedResource.Lib.Models;
+using ProtectedResource.Lib.Services;
 using System.Data;
 using System.Data.SqlClient;
-using System.IO;
 using System.Linq;
 
 namespace ProtectedResource.Lib.DataAccess
@@ -15,28 +14,9 @@ namespace ProtectedResource.Lib.DataAccess
     {
         protected string ConnectionString;
 
-        public void ChangeConnectionString(string connectionString)
+        protected BaseRepository(IConfigurationService config)
         {
-            ConnectionString = connectionString;
-        }
-
-        protected BaseRepository()
-        {
-            //For now going to just load one expected connection string. Not sure if this will change later or not.
-            ConnectionString = LoadConnectionString();
-        }
-
-        private static string LoadConnectionString()
-        {
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-
-            var configuration = builder.Build();
-
-            var connectionString = configuration.GetConnectionString("ScratchSpace");
-
-            return connectionString;
+            ConnectionString = config.ConnectionString;
         }
 
         protected SchemaRaw GetFullSchemaInformation(string sql)

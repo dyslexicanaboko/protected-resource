@@ -26,11 +26,13 @@ namespace ProtectedResource.Lib
 		private SchemaQuery _schema;
 		private string _selectByPartitionKey;
 		private string _updateByPartitionKeyTemplate;
+		private readonly IConfigurationService _config;
 
 		public TableManager(
 			IQueryToClassRepository repository,
 			ICachingService cachingService,
-			IMessagingQueueService messagingQueueService)
+			IMessagingQueueService messagingQueueService,
+			IConfigurationService config)
 		{
 			_repository = repository;
 
@@ -39,6 +41,8 @@ namespace ProtectedResource.Lib
 			_messagingQueueService = messagingQueueService;
 
 			_partitionWatchers = new Dictionary<string, PartitionWatcher<T>>();
+
+			_config = config;
 		}
 
 		public void Initialize(TableQuery tableQuery, int chunkSize)
@@ -70,7 +74,7 @@ namespace ProtectedResource.Lib
 		//  I am thinking like taking 10 requests at a time and performing a merge where last in wins for conflicts
 		//  If anything needs to happen as a result of a value changing, it will be fired off but this is the wrong place for that to happen
 		//The resource can be partitioned by grouping if one exists
-		public void ProcessPartition(PartitionWatcher<T> partitionWatcher, int chunkSize)
+		private void ProcessPartition(PartitionWatcher<T> partitionWatcher, int chunkSize)
 		{
 			//Since the partition is being processed, the timer should be stopped
 			//TODO: What to do on an exception? Start the timer again?
@@ -107,7 +111,6 @@ namespace ProtectedResource.Lib
 				repJObject = SquashChanges(repJObject, otherJObject);
 			}
 
-			//TODO: Make representative object contain targeted properties only after merge with cached object.
 			//Cached will have all properties always, representative will not. Make them match.
 			//This impacts the SQL creation as well
 			//https://www.newtonsoft.com/json/help/html/jobjectproperties.htm
@@ -212,7 +215,7 @@ namespace ProtectedResource.Lib
 			//Partition the items into separate queues
 			if (!_partitionWatchers.TryGetValue(key, out var watcher))
 			{
-				watcher = new PartitionWatcher<T>(key);
+				watcher = new PartitionWatcher<T>(_config, key);
 				watcher.WhenStale += PartitionWatcher_WhenStale;
 
 				_partitionWatchers.Add(key, watcher);

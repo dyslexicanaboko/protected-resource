@@ -13,10 +13,11 @@ namespace ProtectedResource.Lib.Services
 		private IModel _channel;
 		private EventingBasicConsumer _consumer;
 		private JsonQueueItem _onProcessQueue;
-
-		public MessagingQueueService()
+		private readonly IConfigurationService _config;
+		
+		public MessagingQueueService(IConfigurationService config)
 		{
-			//TODO: Inject configuration
+			_config = config;
 		}
 
 		public void Start(string queueName, JsonQueueItem processQueueItem)
@@ -44,8 +45,7 @@ namespace ProtectedResource.Lib.Services
 
 		private IConnection GetConnection()
 		{
-			//TODO: Make hostname configurable
-			var factory = new ConnectionFactory() { HostName = "localhost" };
+			var factory = new ConnectionFactory() { HostName = _config.MessageQueueUri };
 
 			var con = factory.CreateConnection();
 
