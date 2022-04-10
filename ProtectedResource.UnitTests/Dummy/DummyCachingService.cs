@@ -50,5 +50,10 @@ namespace ProtectedResource.UnitTests.Dummy
         {
             Cache.Clear();
         }
+
+        public void Dispose()
+        {
+            //Do nothing
+        }
     }
 }

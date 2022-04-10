@@ -1,8 +1,10 @@
-﻿using ProtectedResource.Lib.Models;
+﻿using System;
+using ProtectedResource.Lib.Models;
 
 namespace ProtectedResource.Lib.Services
 {
     public interface ICachingService
+        : IDisposable
     {
         void Initialize();
         

@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtectedResource.Integrati
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtectedResource.Service", "ProtectedResource.Service\ProtectedResource.Service.csproj", "{3E4EA8FB-722F-42B7-B402-96234BE6466E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtectedResource.Entity", "ProtectedResource.Entity\ProtectedResource.Entity.csproj", "{AB79026F-1946-4801-B8F3-2197F19F4831}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{3E4EA8FB-722F-42B7-B402-96234BE6466E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3E4EA8FB-722F-42B7-B402-96234BE6466E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3E4EA8FB-722F-42B7-B402-96234BE6466E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB79026F-1946-4801-B8F3-2197F19F4831}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB79026F-1946-4801-B8F3-2197F19F4831}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB79026F-1946-4801-B8F3-2197F19F4831}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB79026F-1946-4801-B8F3-2197F19F4831}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

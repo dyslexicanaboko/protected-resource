@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ProtectedResource.Entity\ProtectedResource.Entity.csproj" />
     <ProjectReference Include="..\ProtectedResource.Lib\ProtectedResource.Lib\ProtectedResource.Lib.csproj" />
   </ItemGroup>
 

@@ -1,7 +1,7 @@
 ﻿using ProtectedResource.Lib;
 using System;
 
-namespace ProtectedResource.IntegrationTests
+namespace ProtectedResource.Entity
 {
     /// <summary>
     /// Capturing some of the more rudimentary properties I have seen to test things that are the most common

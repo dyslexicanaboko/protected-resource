@@ -2,6 +2,7 @@
 using Moq;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using ProtectedResource.Entity;
 using ProtectedResource.IntegrationTests;
 using ProtectedResource.Lib;
 using ProtectedResource.Lib.DataAccess;

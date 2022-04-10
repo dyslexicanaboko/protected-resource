@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using ProtectedResource.Entity;
 using ProtectedResource.Lib;
 using ProtectedResource.Lib.DataAccess;
 using ProtectedResource.Lib.Models;

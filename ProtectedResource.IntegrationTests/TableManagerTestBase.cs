@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using ProtectedResource.Entity;
 
 namespace ProtectedResource.IntegrationTests
 {

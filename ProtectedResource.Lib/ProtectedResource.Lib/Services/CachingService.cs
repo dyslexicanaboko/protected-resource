@@ -21,6 +21,9 @@ namespace ProtectedResource.Lib.Services
 
         public void Initialize()
         {
+            //Only initialize a single time
+            if (_cache != null) return;
+
             _cache = ConnectionMultiplexer.Connect(
                 new ConfigurationOptions
                 {
@@ -59,9 +62,15 @@ namespace ProtectedResource.Lib.Services
             _cacheDatabase.KeyExpire(key, expiresOn);
         }
 
+        /// <summary>This should only be used for testing.</summary>
         public void Clear()
         {
             _cacheDatabase.Execute("flushdb");
+        }
+
+        public void Dispose()
+        {
+            _cache?.Dispose();
         }
     }
 }

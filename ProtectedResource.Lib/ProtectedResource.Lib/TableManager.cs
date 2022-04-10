@@ -74,7 +74,7 @@ namespace ProtectedResource.Lib
 		//  I am thinking like taking 10 requests at a time and performing a merge where last in wins for conflicts
 		//  If anything needs to happen as a result of a value changing, it will be fired off but this is the wrong place for that to happen
 		//The resource can be partitioned by grouping if one exists
-		public void ProcessPartition(PartitionWatcher<T> partitionWatcher, int chunkSize)
+		private void ProcessPartition(PartitionWatcher<T> partitionWatcher, int chunkSize)
 		{
 			//Since the partition is being processed, the timer should be stopped
 			//TODO: What to do on an exception? Start the timer again?
