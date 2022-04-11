@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ProtectedResource.Lib.DataAccess;
 using ProtectedResource.Lib.Events;
@@ -27,12 +28,14 @@ namespace ProtectedResource.Lib
 		private string _selectByPartitionKey;
 		private string _updateByPartitionKeyTemplate;
 		private readonly IConfigurationService _config;
-
+		private readonly ILogger<TableManager<T>> _logger;
+		
 		public TableManager(
 			IQueryToClassRepository repository,
 			ICachingService cachingService,
 			IMessagingQueueService messagingQueueService,
-			IConfigurationService config)
+			IConfigurationService config,
+			ILogger<TableManager<T>> logger)
 		{
 			_repository = repository;
 
@@ -43,6 +46,8 @@ namespace ProtectedResource.Lib
 			_partitionWatchers = new Dictionary<string, PartitionWatcher<T>>();
 
 			_config = config;
+
+			_logger = logger;
 		}
 
 		public void Initialize(TableQuery tableQuery, int chunkSize)
@@ -64,7 +69,7 @@ namespace ProtectedResource.Lib
 				WHERE {_schema.PrimaryKey.ColumnName} = @{_schema.PrimaryKey.ColumnName}
 				FOR JSON AUTO, WITHOUT_ARRAY_WRAPPER";
 
-			//Would it be better to just create all permutations of update list up front and select it based on hash?
+			//Would it be better to just create all permutations of update list up front and select it based on hash? -- Issue #5
 			_updateByPartitionKeyTemplate = $@"UPDATE {t.Schema}.{t.Table} SET
 				{{0}}
 				WHERE {_schema.PrimaryKey.ColumnName} = @{_schema.PrimaryKey.ColumnName}";
@@ -76,80 +81,128 @@ namespace ProtectedResource.Lib
 		//The resource can be partitioned by grouping if one exists
 		private void ProcessPartition(PartitionWatcher<T> partitionWatcher, int chunkSize)
 		{
-			//Since the partition is being processed, the timer should be stopped
-			//TODO: What to do on an exception? Start the timer again?
-			partitionWatcher.Stop();
-
-			//Take a chunk of the items in the queue
-			var length = partitionWatcher.Count >= chunkSize ? chunkSize : partitionWatcher.Count;
-
-			var arr = new ChangeRequest<T>[length];
-
-			//Add them to an array in reverse order so that the representative item is last in the squash
-			for (var i = length - 1; i >= 0; i--)
+			try
 			{
-				arr[i] = partitionWatcher.Dequeue();
+				//Since the partition is being processed, the timer should be stopped and the watcher
+				//should set its status as busy.
+				partitionWatcher.SetUnavailable();
+				partitionWatcher.StopTimer();
+
+				//Take a chunk of the items in the queue
+				var length = partitionWatcher.Count >= chunkSize ? chunkSize : partitionWatcher.Count;
+
+				var arr = new ChangeRequest<T>[length];
+
+				//Add them to an array in reverse order so that the representative item is last in the squash
+				for (var i = length - 1; i >= 0; i--)
+				{
+					arr[i] = partitionWatcher.Dequeue();
+				}
+
+				//Representative object - last in and final say for squash
+				var rep = arr[0];
+				var repJObject = JObject.Parse(rep.PatchJson);
+
+				/* Get cached copy
+				 *     Cache will store object as Json
+				 *     If cache does not have a copy, get one from the database and keep it in memory for an hour (configurable) */
+				var cachedCopy = GetResource(_resourceKey, partitionWatcher.PartitionKey);
+				var cachedJObject = JObject.Parse(cachedCopy);
+
+				//Perform squash on chunk - via JSON
+				//Only include fields from cached copy that will change for squash
+				//https://www.newtonsoft.com/json/help/html/MergeJson.htm
+				for (var i = 1; i < arr.Length; i++)
+				{
+					var otherJObject = JObject.Parse(arr[i].PatchJson);
+
+					repJObject = SquashChanges(repJObject, otherJObject);
+				}
+
+				//If there was a previous failure, then merge it back in
+				if (partitionWatcher.FailedCommitReference != null)
+				{
+					repJObject = SquashChanges(repJObject, partitionWatcher.FailedCommitReference);
+				}
+
+				//Cached will have all properties always, representative will not. Make them match.
+				//This impacts the SQL creation as well
+				//https://www.newtonsoft.com/json/help/html/jobjectproperties.htm
+				//https://www.newtonsoft.com/json/help/html/m_newtonsoft_json_linq_jobject_remove.htm
+
+				var partialJObject = SynchronizeProperties(repJObject, cachedJObject);
+
+				//If the representative and cached copy are identical then there is nothing to do here
+				//https://www.newtonsoft.com/json/help/html/DeepEquals.htm
+				if (JToken.DeepEquals(repJObject, partialJObject)) return;
+
+				//Clone the representative to make a copy for partial update to the database
+				var repJObjectSqlCopy = new JObject(repJObject);
+
+				//Merge representative with full copy to create the changed object to be persisted to cache
+				repJObject = SquashChanges(repJObject, cachedJObject);
+
+				//Merge representative with partial copy to create the changed object to be persisted to database
+				repJObjectSqlCopy = SquashChanges(repJObjectSqlCopy, partialJObject);
+
+				//JSON to persist to cache
+				var finalJson = repJObject.ToString(Formatting.None);
+
+				bool committed;
+
+				try
+				{
+					//Partial object to use for updating the database
+					_repository.UpdatePartition(
+						_updateByPartitionKeyTemplate,
+						partitionWatcher.PartitionKey,
+						_schema,
+						repJObjectSqlCopy);
+
+					//Only successful if transaction commits with no error
+					committed = true;
+				}
+				catch (Exception ex)
+				{
+					/* If transaction fails:
+					 *    1. Take the merged object and throw it back on the internal queue
+					 *    2. Log the error
+					 *    3. Have a limit on how many times there can be a sequential failure until killing this manager */
+					//TODO: Need to test out the failures and see what information should be submitted as logging parameters
+					_logger.LogCritical(ex, "Transaction failed to commit.");
+
+					committed = false;
+				}
+
+				if (committed)
+				{
+					//Requires the full object
+					_cachingService.HashSet(_resourceKey, partitionWatcher.PartitionKey, finalJson);
+
+					//Disassociate from any previous references
+					partitionWatcher.FailedCommitReference = null;
+				}
+				else
+				{
+					//Keep a reference to what could not be committed
+					partitionWatcher.FailedCommitReference = repJObjectSqlCopy;
+
+					//Delete the partition from cache so that it will be re-cached from the database on the next loop.
+					//There is a strong possibility that something changed on the database which is what caused the transaction to fail.
+					//More often than not it's Deadlock.
+					_cachingService.HashDelete(_resourceKey, partitionWatcher.PartitionKey);
+				}
+			}
+			finally
+			{
+				partitionWatcher.SetAvailable();
 			}
 
-			//Representative object - last in and final say for squash
-			var rep = arr[0];
-			var repJObject = JObject.Parse(rep.PatchJson);
-
-			/* Get cached copy
-			 *     Cache will store object as Json
-			 *     If cache does not have a copy, get one from the database and keep it in memory for an hour */
-			var cachedCopy = GetResource(_resourceKey, partitionWatcher.PartitionKey);
-			var cachedJObject = JObject.Parse(cachedCopy);
-
-			//Perform squash on chunk - via JSON
-			//Only include fields from cached copy that will change for squash
-			//https://www.newtonsoft.com/json/help/html/MergeJson.htm
-			for (var i = 1; i < arr.Length; i++)
-			{
-				var otherJObject = JObject.Parse(arr[i].PatchJson);
-
-				repJObject = SquashChanges(repJObject, otherJObject);
-			}
-
-			//Cached will have all properties always, representative will not. Make them match.
-			//This impacts the SQL creation as well
-			//https://www.newtonsoft.com/json/help/html/jobjectproperties.htm
-			//https://www.newtonsoft.com/json/help/html/m_newtonsoft_json_linq_jobject_remove.htm
-
-			var partialJObject = SynchronizeProperties(repJObject, cachedJObject);
-
-			//If the representative and cached copy are identical then there is nothing to do here
-			//https://www.newtonsoft.com/json/help/html/DeepEquals.htm
-			if (JToken.DeepEquals(repJObject, partialJObject)) return;
-
-			//Clone the representative to make a copy for partial update to the database
-			var repJObjectSqlCopy = new JObject(repJObject);
-
-			//Merge representative with full copy to create the changed object to be persisted to cache
-			repJObject = SquashChanges(repJObject, cachedJObject);
-
-			//Merge representative with partial copy to create the changed object to be persisted to database
-			repJObjectSqlCopy = SquashChanges(repJObjectSqlCopy, partialJObject);
-
-			//JSON to persist to cache
-			var finalJson = repJObject.ToString(Formatting.None);
-
-			//Partial object to use for updating the database
-			_repository.UpdatePartition(
-				_updateByPartitionKeyTemplate, 
-				partitionWatcher.PartitionKey, 
-				_schema, 
-				repJObjectSqlCopy);
-
-			//Requires the full object
-			_cachingService.HashSet(_resourceKey, partitionWatcher.PartitionKey, finalJson);
-			
-			/* Only successful if transaction commits
-			 *     If transaction fails, update cached copy and re-squash
+			/* Right now assuming no one outside will change the cached object.
+			 *		After transaction - the cached version should probably be deleted just in case an outside source
+			 *		is also changing the partition.
 			 *
-			 * Right now assume no one outside will change the cached object.
-			 *		After transaction - re-caching the object might be a good idea if an outside source
-			 *		changed the same partition during submit. */
+			 *		The alternative is to refresh the cache after every commit. */
 		}
 
 		/// <summary>
@@ -230,13 +283,14 @@ namespace ProtectedResource.Lib
 			};
 			
 			watcher.Enqueue(changeRequest);
-			watcher.Start();
+			watcher.StartTimer();
 
 			Console.WriteLine(" [x] Received {0}", json);
 
 			//If the queue count isn't greater than the chunk size, wait for more items
-			if (watcher.Count < _chunkSize) return;
-				
+			//If the watcher is busy merging a chunk already, then wait until it's available again
+			if (watcher.Count < _chunkSize || watcher.IsBusy()) return;
+
 			ProcessPartition(watcher, _chunkSize);
 		}
 

@@ -38,7 +38,12 @@ namespace ProtectedResource.IntegrationTests
             //Not sure how I am going to deal with this yet
             var queue = new MessagingQueueService(_config);
 
-            var tm = new TableManager<RudimentaryEntity>(_repo, _cachingService, queue, _config);
+            var tm = new TableManager<RudimentaryEntity>(
+                _repo, 
+                _cachingService, 
+                queue, 
+                _config, 
+                GetDummyLogger());
 
             return tm;
         }

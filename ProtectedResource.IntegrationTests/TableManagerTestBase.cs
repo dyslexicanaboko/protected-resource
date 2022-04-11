@@ -1,9 +1,12 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Linq;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using ProtectedResource.Entity;
+using ProtectedResource.Lib;
+using System;
+using System.Linq;
 
 namespace ProtectedResource.IntegrationTests
 {
@@ -18,6 +21,8 @@ namespace ProtectedResource.IntegrationTests
         }
 
         protected const int PrimaryKey = 5002; //This is in the database already
+
+        protected ILogger<TableManager<RudimentaryEntity>> GetDummyLogger() => NullLogger<TableManager<RudimentaryEntity>>.Instance;
 
         protected RudimentaryEntity[] GetRandomObjectRequests(int count = 10)
         {

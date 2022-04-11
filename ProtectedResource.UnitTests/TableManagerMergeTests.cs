@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Moq;
+﻿using Moq;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using ProtectedResource.Entity;
@@ -9,6 +8,7 @@ using ProtectedResource.Lib.DataAccess;
 using ProtectedResource.Lib.Models;
 using ProtectedResource.Lib.Services;
 using ProtectedResource.UnitTests.Dummy;
+using System.Collections.Generic;
 
 namespace ProtectedResource.UnitTests
 {
@@ -69,7 +69,12 @@ namespace ProtectedResource.UnitTests
             _dummyCache = new DummyCachingService();
             _dummyCache.Initialize();
 
-            var tm = new TableManager<RudimentaryEntity>(_mockRepo.Object, _dummyCache, queue, config);
+            var tm = new TableManager<RudimentaryEntity>(
+                _mockRepo.Object, 
+                _dummyCache, 
+                queue, 
+                config, 
+                GetDummyLogger());
 
             return tm;
         }

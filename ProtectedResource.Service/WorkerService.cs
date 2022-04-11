@@ -1,30 +1,34 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using ProtectedResource.Entity;
 using ProtectedResource.Lib;
 using ProtectedResource.Lib.DataAccess;
 using ProtectedResource.Lib.Models;
 using ProtectedResource.Lib.Services;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ProtectedResource.Service
 {
     public class WorkerService : BackgroundService
     {
         private readonly ILogger<WorkerService> _logger;
+        private readonly ILogger<TableManager<RudimentaryEntity>> _loggerRudimentaryEntity;
+
         private readonly IConfigurationService _config;
         private readonly ICachingService _cachingService;
         private readonly IQueryToClassRepository _repository;
 
         public WorkerService(
             ILogger<WorkerService> logger,
+            ILogger<TableManager<RudimentaryEntity>> loggerRudimentaryEntity,
             IConfigurationService config,
             ICachingService cachingService,
             IQueryToClassRepository repository)
         {
             _logger = logger;
+
+            _loggerRudimentaryEntity = loggerRudimentaryEntity;
 
             _config = config;
 
@@ -51,12 +55,13 @@ namespace ProtectedResource.Service
             var queue = new MessagingQueueService(_config);
 
             //This should run inside of a monitor so that if this crashes for any reason it can be brought back up and
-            //the error is logged appropriately and doesn't kill the service necessarily
+            //the error is logged appropriately and doesn't kill the service necessarily -- Issue #4
             var tm = new TableManager<RudimentaryEntity>(
                 _repository, 
                 _cachingService, 
                 queue, 
-                _config);
+                _config,
+                _loggerRudimentaryEntity);
 
             var entity = $"{nameof(RudimentaryEntity)}";
 

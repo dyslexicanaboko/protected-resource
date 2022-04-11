@@ -4,10 +4,10 @@ using NUnit.Framework;
 using ProtectedResource.IntegrationTests;
 using ProtectedResource.Lib.DataAccess;
 using ProtectedResource.Lib.Models;
+using ProtectedResource.Lib.Services;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using ProtectedResource.Lib.Services;
 
 namespace ProtectedResource.UnitTests.DataAccess
 {

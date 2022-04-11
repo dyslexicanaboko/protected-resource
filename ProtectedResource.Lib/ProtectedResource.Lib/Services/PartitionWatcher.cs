@@ -1,4 +1,5 @@
-﻿using ProtectedResource.Lib.Events;
+﻿using Newtonsoft.Json.Linq;
+using ProtectedResource.Lib.Events;
 using System.Collections.Generic;
 using System.Timers;
 
@@ -16,7 +17,11 @@ namespace ProtectedResource.Lib.Services
 
         public event StaleQueueHandler WhenStale;
 
+        public JObject FailedCommitReference { get; set; }
+
         private readonly Timer _timer;
+
+        private bool _isBusy;
 
         public PartitionWatcher(IConfigurationService config, string partitionKey)
             : this(config, partitionKey, new Queue<ChangeRequest<T>>())
@@ -42,24 +47,40 @@ namespace ProtectedResource.Lib.Services
             WhenStale?.Invoke(sender, new StaleQueueEventArgs<T>(this));
         }
 
+        /// <summary>The key used to find a partition in a table.</summary>
+        /// <example>Id 12 is supplied when searching by primary key to find a row in a table.</example>
         public string PartitionKey { get; }
 
+        /// <summary>The number of change requests held for processing in the internal queue.</summary>
         public int Count => Queue.Count;
 
         public Queue<ChangeRequest<T>> Queue { get; }
 
+        /// <summary>Add a change request to the back of the queue.</summary>
         public void Enqueue(ChangeRequest<T> changeRequest) => Queue.Enqueue(changeRequest);
-        
+
+        /// <summary>Remove a change request from the front of the queue.</summary>
         public ChangeRequest<T> Dequeue() => Queue.Dequeue();
 
-        public void Start()
+        /// <summary>Start the stale check timer</summary>
+        public void StartTimer()
         {
             //If the timer is already running then don't do it again
-            if (_timer.Enabled) return;
+            if (_timer.Enabled || _isBusy) return;
 
             _timer.Start();
         }
 
-        public void Stop() => _timer.Stop();
+        /// <summary>Stop the stale check timer</summary>
+        public void StopTimer() => _timer.Stop();
+
+        /// <summary>Determines if this partition is being processed at the moment</summary>
+        public bool IsBusy() => _isBusy;
+
+        /// <summary>Sets this partition as busy or unavailable.</summary>
+        public void SetUnavailable() => _isBusy = true;
+
+        /// <summary>Sets this partition as free or available.</summary>
+        public void SetAvailable() => _isBusy = false;
     }
 }
