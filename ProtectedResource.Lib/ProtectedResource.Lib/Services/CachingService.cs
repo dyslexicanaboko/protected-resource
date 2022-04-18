@@ -62,6 +62,11 @@ namespace ProtectedResource.Lib.Services
             _cacheDatabase.KeyExpire(key, expiresOn);
         }
 
+        public void HashDelete(string key, string hashField)
+        {
+            _cacheDatabase.HashDelete(key, hashField);
+        }
+
         /// <summary>This should only be used for testing.</summary>
         public void Clear()
         {

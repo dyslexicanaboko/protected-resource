@@ -95,6 +95,7 @@ namespace ProtectedResource.Lib.DataAccess
             {
                 connection.Open();
 
+                //TODO: Isolation level will need to be configurable for databases that cannot leverage Snapshot isolation
                 using (var transaction = connection.BeginTransaction(IsolationLevel.Snapshot))
                 {
                     var sqlParamList = GetUpdateStatement(updateSqlTemplate, partitionKey, schema, changes);

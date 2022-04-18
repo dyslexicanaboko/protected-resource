@@ -46,6 +46,11 @@ namespace ProtectedResource.UnitTests.Dummy
             Cache.Add(hashField, value);
         }
 
+        public void HashDelete(string key, string hashField)
+        {
+            Cache.Remove(hashField);
+        }
+
         public void Clear()
         {
             Cache.Clear();
