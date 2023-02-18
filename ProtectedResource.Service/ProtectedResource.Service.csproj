@@ -20,10 +20,4 @@
     <ProjectReference Include="..\ProtectedResource.Lib\ProtectedResource.Lib\ProtectedResource.Lib.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>

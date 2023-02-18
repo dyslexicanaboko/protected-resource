@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31829.152
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtectedResource.Lib", "ProtectedResource.Lib\ProtectedResource.Lib\ProtectedResource.Lib.csproj", "{CBF053D3-1B26-43F1-BDA1-BEA4A3A0D572}"
 EndProject
@@ -9,9 +9,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtectedResource.UnitTests
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtectedResource.IntegrationTests", "ProtectedResource.IntegrationTests\ProtectedResource.IntegrationTests.csproj", "{CA06286F-4E29-4500-81B5-3FFE48837BF7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtectedResource.Service", "ProtectedResource.Service\ProtectedResource.Service.csproj", "{3E4EA8FB-722F-42B7-B402-96234BE6466E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtectedResource.Service", "ProtectedResource.Service\ProtectedResource.Service.csproj", "{3E4EA8FB-722F-42B7-B402-96234BE6466E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtectedResource.Entity", "ProtectedResource.Entity\ProtectedResource.Entity.csproj", "{AB79026F-1946-4801-B8F3-2197F19F4831}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtectedResource.Entity", "ProtectedResource.Entity\ProtectedResource.Entity.csproj", "{AB79026F-1946-4801-B8F3-2197F19F4831}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Testing", "Testing", "{A79BEBAF-A22B-44F1-B70B-0F97396FDE73}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -42,6 +44,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2C9137AA-2239-4C0C-BDEC-9ED2E44D04F0} = {A79BEBAF-A22B-44F1-B70B-0F97396FDE73}
+		{CA06286F-4E29-4500-81B5-3FFE48837BF7} = {A79BEBAF-A22B-44F1-B70B-0F97396FDE73}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CAC6C9FD-BAA8-4F1C-AC23-5FB5DDB37061}

@@ -7,6 +7,7 @@ using ProtectedResource.Lib.Services;
 
 namespace ProtectedResource.IntegrationTests
 {
+    /* WARNING: If these tests are failing, please refer to the ReadMe.md */
     [TestFixture]
     public class TableManagerTests
         : TableManagerTestBase
