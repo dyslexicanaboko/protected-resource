@@ -14,11 +14,11 @@ namespace ProtectedResource.Lib
 	/// <summary>
 	/// TODO: Statistics should be collected so long as it doesn't degrade performance
 	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	public class TableManager<T>
-		where T : IResource, new()
+	/// <typeparam name="TResource"></typeparam>
+	public class TableManager<TResource>
+		where TResource : IResource, new()
 	{
-		private readonly Dictionary<string, PartitionWatcher<T>> _partitionWatchers;
+		private readonly Dictionary<string, PartitionWatcher<TResource>> _partitionWatchers;
 		private readonly IQueryToClassRepository _repository;
 		private readonly ICachingService _cachingService;
 		private readonly IMessagingQueueService _messagingQueueService;
@@ -28,14 +28,14 @@ namespace ProtectedResource.Lib
 		private string _selectByPartitionKey;
 		private string _updateByPartitionKeyTemplate;
 		private readonly IConfigurationService _config;
-		private readonly ILogger<TableManager<T>> _logger;
+		private readonly ILogger<TableManager<TResource>> _logger;
 		
 		public TableManager(
 			IQueryToClassRepository repository,
 			ICachingService cachingService,
 			IMessagingQueueService messagingQueueService,
 			IConfigurationService config,
-			ILogger<TableManager<T>> logger)
+			ILogger<TableManager<TResource>> logger)
 		{
 			_repository = repository;
 
@@ -43,7 +43,7 @@ namespace ProtectedResource.Lib
 
 			_messagingQueueService = messagingQueueService;
 
-			_partitionWatchers = new Dictionary<string, PartitionWatcher<T>>();
+			_partitionWatchers = new Dictionary<string, PartitionWatcher<TResource>>();
 
 			_config = config;
 
@@ -79,7 +79,7 @@ namespace ProtectedResource.Lib
 		//  I am thinking like taking 10 requests at a time and performing a merge where last in wins for conflicts
 		//  If anything needs to happen as a result of a value changing, it will be fired off but this is the wrong place for that to happen
 		//The resource can be partitioned by grouping if one exists
-		private void ProcessPartition(PartitionWatcher<T> partitionWatcher, int chunkSize)
+		private void ProcessPartition(PartitionWatcher<TResource> partitionWatcher, int chunkSize)
 		{
 			try
 			{
@@ -91,7 +91,7 @@ namespace ProtectedResource.Lib
 				//Take a chunk of the items in the queue
 				var length = partitionWatcher.Count >= chunkSize ? chunkSize : partitionWatcher.Count;
 
-				var arr = new ChangeRequest<T>[length];
+				var arr = new ChangeRequest<TResource>[length];
 
 				//Add them to an array in reverse order so that the representative item is last in the squash
 				for (var i = length - 1; i >= 0; i--)
@@ -261,20 +261,20 @@ namespace ProtectedResource.Lib
 		//Generically process a dequeued item from the main Message Queue (RabbitMQ)
 		private void ProcessChangeRequest(string json)
 		{
-			var entity = JsonConvert.DeserializeObject<T>(json);
+			var entity = JsonConvert.DeserializeObject<TResource>(json);
 
 			var key = entity.GetPartitionKey();
 
 			//Partition the items into separate queues
 			if (!_partitionWatchers.TryGetValue(key, out var watcher))
 			{
-				watcher = new PartitionWatcher<T>(_config, key);
+				watcher = new PartitionWatcher<TResource>(_config, key);
 				watcher.WhenStale += PartitionWatcher_WhenStale;
 
 				_partitionWatchers.Add(key, watcher);
 			}
 
-			var changeRequest = new ChangeRequest<T>
+			var changeRequest = new ChangeRequest<TResource>
 			{
 				ModifiedResource = entity,
 				PatchJson = json,
@@ -294,7 +294,7 @@ namespace ProtectedResource.Lib
 			ProcessPartition(watcher, _chunkSize);
 		}
 
-		private void PartitionWatcher_WhenStale(object sender, StaleQueueEventArgs<T> e)
+		private void PartitionWatcher_WhenStale(object sender, StaleQueueEventArgs<TResource> e)
 		{
 			ProcessPartition(e.StalePartitionWatcher, _chunkSize);
 		}

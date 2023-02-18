@@ -91,18 +91,18 @@ namespace ProtectedResource.Lib.DataAccess
         // This assumes single column primary keys for right now
         public void UpdatePartition(string updateSqlTemplate, string partitionKey, SchemaQuery schema, JObject changes)
         {
-            using (var connection = new SqlConnection(ConnectionString))
-            {
-                connection.Open();
+            using var connection = new SqlConnection(ConnectionString);
+            
+            connection.Open();
 
-                //TODO: Isolation level will need to be configurable for databases that cannot leverage Snapshot isolation
-                using (var transaction = connection.BeginTransaction(IsolationLevel.Snapshot))
-                {
-                    var sqlParamList = GetUpdateStatement(updateSqlTemplate, partitionKey, schema, changes);
+            //TODO: Isolation level will need to be configurable for databases that cannot leverage Snapshot isolation
+            using var transaction = connection.BeginTransaction(IsolationLevel.Snapshot);
+            
+            var sqlParamList = GetUpdateStatement(updateSqlTemplate, partitionKey, schema, changes);
 
-                    connection.Execute(sqlParamList.Sql, sqlParamList.Parameters, transaction);
-                }
-            }
+            connection.Execute(sqlParamList.Sql, sqlParamList.Parameters, transaction);
+
+            transaction.Commit();
         }
 
         private SqlParamList GetUpdateStatement(string updateSqlTemplate, string partitionKey, SchemaQuery schema, JObject changes)

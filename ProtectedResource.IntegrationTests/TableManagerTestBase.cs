@@ -6,6 +6,7 @@ using NUnit.Framework;
 using ProtectedResource.Entity;
 using ProtectedResource.Lib;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace ProtectedResource.IntegrationTests
@@ -52,6 +53,13 @@ namespace ProtectedResource.IntegrationTests
             var arrObj = GetRandomObjectRequests(count);
 
             var arr = arrObj.Select(JsonConvert.SerializeObject).ToArray();
+
+            return arr;
+        }
+
+        protected string[] GetEntitiesAsJson<T>(IEnumerable<T> entities)
+        {
+            var arr = entities.Select(x => JsonConvert.SerializeObject(x)).ToArray();
 
             return arr;
         }
